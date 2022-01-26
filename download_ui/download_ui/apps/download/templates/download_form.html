@@ -1,0 +1,13 @@
+{% extends "base_generic.html" %}
+
+{% block content %}
+  <h1>Downloader Home</h1>
+  <p>Welcome to Downloader, a website developed by <em>Kerry Nicholson</em>!</p>
+  <form action="" method="post">
+    {% csrf_token %}
+    <table>
+    {{ form.as_table }}
+    </table>
+    <input class="btn btn-primary" type="submit" value="Submit">
+  </form>
+{% endblock %}

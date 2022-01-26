@@ -1,0 +1,16 @@
+{% extends "base_generic.html" %}
+
+{% block content %}
+  <h1>Download List</h1>
+  {% if download_list %}
+  <ul>
+    {% for download in download_list %}
+      <li>
+        <a href="{% url 'download:detail' download.id %}">{{ download.title }}</a> ({{download.source}})
+      </li>
+    {% endfor %}
+  </ul>
+  {% else %}
+    <p>There are no downloads in the system.</p>
+  {% endif %}
+{% endblock %}
