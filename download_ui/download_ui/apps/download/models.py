@@ -44,7 +44,7 @@ class Source(TimestampedModel):
     )
 
     def __str__(self):
-        return self.source
+        return self.get_source_display()
 
 class Download(TimestampedModel):
 

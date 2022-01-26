@@ -3,29 +3,37 @@
 {% block content %}
   <h1>Download List</h1>
   {% if download_list %}
-  <div class="table-responsive">
-    <table class="table table-striped">
-      <thead>
-        <tr>
-          <th scope="col">#</th>
-          <th scope="col">Title</th>
-          <th scope="col">Source</th>
-        </tr>
-      </thead>
-      <tbody>
-        {% for download in download_list %}
-          <tr>
-            <th scope="row">
-              {{ download.id }}
-            </th>
-            <td>
-              <a href="{% url 'download:detail' download.id %}">{{ download.title }}</a>
-            </td>
-            <td>{{download.source.get_source_display}}</td>
-          </tr>
-        {% endfor %}
-      </tbody>
-    </table>
+  <div class="card mb-4">
+    <div class="card-header">
+        <i class="fas fa-table me-1"></i>
+        Latest Downloads
+    </div>
+    <div class="card-body">
+      <div class="table-responsive">
+        <table class="table table-striped">
+          <thead>
+            <tr>
+              <th scope="col">#</th>
+              <th scope="col">Title</th>
+              <th scope="col">Source</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for download in download_list %}
+              <tr>
+                <th scope="row">
+                  {{ download.id }}
+                </th>
+                <td>
+                  <a href="{% url 'download:detail' download.id %}">{{ download.title }}</a>
+                </td>
+                <td>{{download.source.get_source_display}}</td>
+              </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    </div>
   </div>
   {% else %}
     <p>There are no downloads in the system.</p>
