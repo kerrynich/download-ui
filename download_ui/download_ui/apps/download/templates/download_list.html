@@ -3,13 +3,30 @@
 {% block content %}
   <h1>Download List</h1>
   {% if download_list %}
-  <ul>
-    {% for download in download_list %}
-      <li>
-        <a href="{% url 'download:detail' download.id %}">{{ download.title }}</a> ({{download.source}})
-      </li>
-    {% endfor %}
-  </ul>
+  <div class="table-responsive">
+    <table class="table table-striped">
+      <thead>
+        <tr>
+          <th scope="col">#</th>
+          <th scope="col">Title</th>
+          <th scope="col">Source</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for download in download_list %}
+          <tr>
+            <th scope="row">
+              {{ download.id }}
+            </th>
+            <td>
+              <a href="{% url 'download:detail' download.id %}">{{ download.title }}</a>
+            </td>
+            <td>{{download.source.get_source_display}}</td>
+          </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
   {% else %}
     <p>There are no downloads in the system.</p>
   {% endif %}
