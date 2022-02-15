@@ -1,0 +1,60 @@
+{% with trig=trigger %}
+<div hx-target="this"
+    hx-get="{% url 'download:progress' download.id %}"
+    hx-trigger="{{ trig }}" 
+    hx-swap="outerHTML"
+    class="border rounded p-2 mb-2 bg-light">
+  <div class="row">
+    <p class="mb-2 ml-2 col"><strong>{{ download.title }}</strong></p>
+    <p class="mb-2 mr-2 col-auto" style="text-align:right;">{{download.created_at|time}}</p>
+  </div>
+{% if download.status == "S" %}
+  <div class="progress" style="height: 31px;">
+    {% with per_class=task_info.percent %}
+    <div id="pb" 
+        class="progress-bar"
+        style="width:{{per_class}}%"
+        role="progressbar"
+        aria-valuenow="{{task_info.percent}}"
+        aria-valuemin="0"
+        aria-valuemax="100">
+      {{task_info.percent_str}}
+    </div>
+    {% endwith %}
+  </div>
+{% elif download.status == "F" %}
+  <div class="progress" style="height: 31px;">
+    <div id="pb"
+        class="progress-bar w-100 bg-danger"
+        role="progressbar"
+        aria-valuenow="100"
+        aria-valuemin="0"
+        aria-valuemax="100">
+      {{download.get_status_display}}
+    </div>
+  </div>
+{% else %}
+  <div class="row align-self-center gx-2">
+    <div class="col">
+      <div class="progress" style="height: 31px;">
+        <div id="pb"
+            class="progress-bar w-100 bg-success"
+            role="progressbar"
+            aria-valuenow="100"
+            aria-valuemin="0"
+            aria-valuemax="100">
+          {{download.get_status_display}}
+        </div>
+      </div>
+    </div>
+    <div class="col-sm-auto">
+      <a class="btn btn-primary btn-sm"
+          classes="add show:600ms" 
+          href="{% url 'download:detail' download.id %}">
+        Details
+      </a>
+    </div>
+  </div>
+{% endif %}
+</div>
+{% endwith %}

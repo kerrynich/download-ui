@@ -127,3 +127,9 @@ dmypy.json
 
 # Pyre type checker
 .pyre/
+
+#redis
+dump.rdb
+
+#VS code
+.vscode

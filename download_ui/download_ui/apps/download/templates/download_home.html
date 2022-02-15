@@ -1,0 +1,37 @@
+{% extends "base_generic.html" %}
+
+{% block content %}
+  <h1>Downloader Home</h1>
+  <div class="row gx-0">
+    <div class="card mb-4 col-sm-auto">
+      <div class="card-header">
+        <i class="fas fa-table me-1"></i>
+        Input your link for download...
+      </div>
+      <div class="card-body">
+        {% include "partials/download_form.html" %}
+      </div>
+    </div>
+    <div class="col"></div>
+  </div>
+  <div class="row g-0">
+    <div class="card mb-4 col-sm-auto" style="min-width: 280px">
+      <div class="card-header">
+        <i class="fas fa-table me-1"></i>
+        Daily Downloads
+      </div>
+      <div class="card-body">
+        <div id="newdownloads" class="mt-2"></div>
+
+        <div class="mb-2">
+          {% for download in downloads %}
+
+          {% include "partials/download_progress.html" %}
+
+          {% endfor %}
+        </div>
+      </div>
+    </div>
+    <div class="col"></div>
+  </div>
+{% endblock %}

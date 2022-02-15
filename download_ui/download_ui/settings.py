@@ -38,6 +38,8 @@ INSTALLED_APPS = [
     'django.contrib.messages',
     'django.contrib.staticfiles',
     'download_ui.apps.download.apps.DownloadConfig',
+    'crispy_forms',
+    "crispy_bootstrap5",
 ]
 
 MIDDLEWARE = [
@@ -130,3 +132,19 @@ DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 # FILE_PATH_FIELD_DIRECTORY = '/media/zarvin/library/'
 # Development
 FILE_PATH_FIELD_DIRECTORY = '/home/magnolia3289/video-downloads'
+
+# Celery Configuration Options
+CELERY_TIMEZONE = 'America/New_York'
+CELERY_TASK_TRACK_STARTED = True
+CELERY_TASK_TIME_LIMIT = 30 * 60
+CELERY_BROKER_URL = 'redis://localhost:6379'
+CELERY_RESULT_BACKEND = 'redis://localhost:6379'
+#: Only add pickle to this list if your broker is secured
+#: from unwanted access (see userguide/security.html)
+CELERY_ACCEPT_CONTENT = ['json']
+CELERY_TASK_SERIALIZER = 'json'
+
+# django-crispy-forms config
+CRISPY_ALLOWED_TEMPLATE_PACKS = "bootstrap5"
+CRISPY_TEMPLATE_PACK = "bootstrap5"
+CRISPY_FAIL_SILENTLY = not DEBUG

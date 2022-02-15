@@ -1,7 +1,15 @@
-from django.db import models
-from django.utils.translation import gettext_lazy as _
+import logging
+
 from django.conf import settings
+from django.core.exceptions import ValidationError
+from django.db import models
 from django.urls import reverse
+from django.utils.translation import gettext_lazy as _get
+
+from .downloaders.downloader import TwitchDownloader, YoutubeDownloader
+from .exceptions import ExtractionError
+
+logger = logging.getLogger('__name__')
 
 class TimestampedModel(models.Model):
     # A timestamp representing when this object was created.
@@ -19,22 +27,42 @@ class TimestampedModel(models.Model):
         # default ordering for most models.
         ordering = ['-created_at', '-updated_at']
 
-class Source(TimestampedModel):
+class Quality(TimestampedModel):
+    name = models.CharField(unique=True, max_length=100)
 
-    class SourceName(models.TextChoices):
-        YOUTUBE = 'YT', _('YouTube')
-        TWITCH = 'TW', _('Twitch')
+    def __str__(self):
+        return self.name
+
+class Extension(TimestampedModel):
+    name = models.CharField(unique=True, max_length=50)
+    qualities = models.ManyToManyField(Quality, through='Format')
+
+    def __str__(self):
+        return self.name
+
+class Format(models.Model):
+    quality = models.ForeignKey(Quality, on_delete=models.CASCADE)
+    extension = models.ForeignKey(Extension, on_delete=models.CASCADE)
+    format_code = models.CharField(max_length=100)
+
+    def __str__(self):
+        return f'{self.extension.name} : {self.quality.name}'
+
+class Download(TimestampedModel):
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.downloader = None
+        self.format_ids = []
 
     class CommandName(models.TextChoices):
-        YOUTUBEDL = 'YTDL', _('youtube-dl')
-        TWITCHDL = 'TWDL', _('twitch-dl')
+        YOUTUBEDL = 'YTDL', _get('youtube-dl')
+        TWITCHDL = 'TWDL', _get('twitch-dl')
 
-    # The website to download from
-    source = models.CharField(
-        max_length=2,
-        choices=SourceName.choices,
-        default=SourceName.TWITCH,
-    )
+    class Status(models.TextChoices):
+        DRAFT = 'D', _get('Draft')
+        STARTED = 'S', _get('Started')
+        FAILED = 'F', _get('Failed')
+        COMPLETED = 'C', _get('Completed')
 
     # The command used to download
     command = models.CharField(
@@ -43,13 +71,11 @@ class Source(TimestampedModel):
         default=CommandName.TWITCHDL,
     )
 
-    def __str__(self):
-        return self.get_source_display()
+    # The website to download from
+    source = models.CharField(max_length=50)
 
-class Download(TimestampedModel):
-
-    # The webiste the download came from
-    source = models.ForeignKey(Source, on_delete=models.PROTECT)
+    # The URL to download
+    url = models.URLField(max_length=300)
 
     # The file location of the download
     file_path = models.FilePathField(
@@ -58,14 +84,91 @@ class Download(TimestampedModel):
         allow_files=True,
         allow_folders=False)
 
-    # The URL to download
-    url = models.URLField(max_length=300)
-
     # The name of the video
-    title = models.CharField(max_length=100)
+    title = models.CharField(max_length=200)
+
+    # The Source's ID
+    slug_id = models.CharField(max_length=100)
+
+    # The Source's Channel name
+    channel_name = models.CharField(max_length=100)
+
+    # Filesize as a string
+    size = models.CharField(max_length=25)
+
+    # Whether download job is done
+    status = models.CharField(
+        max_length=1,
+        choices=Status.choices,
+        default=Status.DRAFT,
+    )
+
+    # The active task id for the celery task performing the download
+    active_task_id = models.CharField(max_length=200)
+
+    # The possible format options for this download
+    choices_for = models.ManyToManyField(Format, related_name='choices')
+
+    # The selected format for the final download
+    file_format = models.ForeignKey(Format, on_delete=models.CASCADE, blank=True, null=True)
 
     def get_absolute_url(self):
-        return reverse('download-detail', kwargs={'pk': self.pk})
+        return reverse('download:detail', kwargs={'pk': self.pk})
 
     def __str__(self):
         return self.title
+
+    def clean_fields(self, exclude=None):
+        super().clean_fields(exclude=exclude)
+        logger.debug('Cleaning fields')
+        command = self.command
+        url = self.url
+
+        # Only do something if both fields are valid so far.
+        # Also only if the download object is being created for the first time
+        if (not self.id) and command and url:
+
+            self.downloader = YoutubeDownloader() if command == 'YTDL' else TwitchDownloader()
+            try:
+                result = self.downloader.extract(url)
+            except ExtractionError as error:
+                raise ValidationError(
+                    _get('Download failure: %(message)s'),
+                    code='invalid',
+                    params={'message': error.message},
+                ) from error
+
+            # Add attributes parsed from info extraction
+            self.source = result['source']
+            self.title = result['title']
+            self.slug_id = result['slug_id']
+            self.channel_name = result['channel_name']
+
+            # Create database objects for Video formats if they don't exist
+            for (ext,qual,code) in result['format_info']:
+                extension, _ = Extension.objects.get_or_create(name=ext)
+                quality, _ = Quality.objects.get_or_create(name=qual)
+                file_format, _ = Format.objects.get_or_create(
+                    quality=quality,
+                    extension=extension,
+                    defaults={'format_code':code}
+                )
+                self.format_ids.append(file_format.id)
+                logger.debug('File format option: Ext: %s Res: %s Code: %s', ext, qual, code)
+
+            logger.debug('Finished cleaning fields')
+
+    def save(self, *args, **kwargs):
+        not_exists = not self.id
+        format_ids = self.format_ids
+
+        # if download is being freshly created
+        if not not_exists and not self.active_task_id:
+            self.status = Download.Status.STARTED
+
+        # Call the "real" save() method.
+        super().save(*args, **kwargs)
+
+        # Add the relationships to the format objects after object is saved
+        if not_exists:
+            self.choices_for.add(*format_ids)

@@ -5,14 +5,52 @@
   <div class="row g-0">
     <div class="card mb-4 col-sm-auto">
       <div class="card-header">
-          <i class="fas fa-table me-1"></i>
-          {{ download.title }}
+        <i class="fas fa-table me-1"></i>
+        <strong>{{ download.title }}</strong>
       </div>
       <div class="card-body">
-        <p><strong>Source:</strong> <a href="">{{ download.source }}</a></p> <!-- source detail link not yet defined -->
-        <p><strong>File Path:</strong> {{ download.file_path }}</p>
-        <p><strong>URL:</strong> {{ download.url }}</p>
-
+        <div class="table-responsive">
+          <table class="table table-striped">
+            <tbody>
+              <tr>
+                <th scope="row">Source:</th>
+                <td>{{ download.source }}</td>
+              </tr>
+              <tr>
+                <th scope="row">File Path:</th>
+                <td>{{ download.file_path }}</td>
+              </tr>
+              <tr>
+                <th scope="row">URL:</th>
+                <td><a href="{{ download.url }}">{{ download.url }}</a></td>
+              </tr>
+              <tr>
+                <th scope="row">Command:</th>
+                <td>{{ download.get_command_display }}</td>
+              </tr>
+              <tr>
+                <th scope="row">Size:</th>
+                <td>{{ download.size }}</td>
+              </tr>
+              <tr>
+                <th scope="row">Slug:</th>
+                <td>{{ download.slug_id }}</td>
+              </tr>
+              <tr>
+                <th scope="row">Channel Name:</th>
+                <td>{{ download.channel_name }}</td>
+              </tr>
+              <tr>
+                <th scope="row">Quality:</th>
+                <td>{{ download.file_format.quality }}</td>
+              </tr>
+              <tr>
+                <th scope="row">Status:</th>
+                <td>{{ download.get_status_display }}</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
         <a class="btn btn-primary" href="{% url 'download:delete' download.id %}">Delete</a>
       </div>
     </div>
