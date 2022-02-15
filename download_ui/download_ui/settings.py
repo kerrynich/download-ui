@@ -128,7 +128,7 @@ STATIC_URL = '/static/'
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
 # Folder for downloads
-# Production: 
+# Production:
 # FILE_PATH_FIELD_DIRECTORY = '/media/zarvin/library/'
 # Development
 FILE_PATH_FIELD_DIRECTORY = '/home/magnolia3289/video-downloads'

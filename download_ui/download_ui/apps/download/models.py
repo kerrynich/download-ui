@@ -11,6 +11,7 @@ from .exceptions import ExtractionError
 
 logger = logging.getLogger('__name__')
 
+
 class TimestampedModel(models.Model):
     # A timestamp representing when this object was created.
     created_at = models.DateTimeField(auto_now_add=True)
@@ -27,11 +28,35 @@ class TimestampedModel(models.Model):
         # default ordering for most models.
         ordering = ['-created_at', '-updated_at']
 
+
+class Command(TimestampedModel):
+    class CommandName(models.TextChoices):
+        YOUTUBEDL = 'YTDL', _get('youtube-dl')
+        TWITCHDL = 'TWDL', _get('twitch-dl')
+
+    name = models.CharField(
+        max_length=4,
+        choices=CommandName.choices,
+        default=CommandName.TWITCHDL,
+    )
+
+    def __str__(self):
+        return self.get_name_display()
+
+
+class Source(TimestampedModel):
+    name = models.CharField(unique=True, max_length=100)
+
+    def __str__(self):
+        return self.name
+
+
 class Quality(TimestampedModel):
     name = models.CharField(unique=True, max_length=100)
 
     def __str__(self):
         return self.name
+
 
 class Extension(TimestampedModel):
     name = models.CharField(unique=True, max_length=50)
@@ -40,23 +65,22 @@ class Extension(TimestampedModel):
     def __str__(self):
         return self.name
 
+
 class Format(models.Model):
     quality = models.ForeignKey(Quality, on_delete=models.CASCADE)
     extension = models.ForeignKey(Extension, on_delete=models.CASCADE)
+    command = models.ForeignKey(Command, on_delete=models.CASCADE)
     format_code = models.CharField(max_length=100)
 
     def __str__(self):
         return f'{self.extension.name} : {self.quality.name}'
+
 
 class Download(TimestampedModel):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.downloader = None
         self.format_ids = []
-
-    class CommandName(models.TextChoices):
-        YOUTUBEDL = 'YTDL', _get('youtube-dl')
-        TWITCHDL = 'TWDL', _get('twitch-dl')
 
     class Status(models.TextChoices):
         DRAFT = 'D', _get('Draft')
@@ -65,14 +89,10 @@ class Download(TimestampedModel):
         COMPLETED = 'C', _get('Completed')
 
     # The command used to download
-    command = models.CharField(
-        max_length=4,
-        choices=CommandName.choices,
-        default=CommandName.TWITCHDL,
-    )
+    command = models.ForeignKey(Command, on_delete=models.CASCADE)
 
     # The website to download from
-    source = models.CharField(max_length=50)
+    source = models.ForeignKey(Source, on_delete=models.CASCADE)
 
     # The URL to download
     url = models.URLField(max_length=300)
@@ -110,7 +130,8 @@ class Download(TimestampedModel):
     choices_for = models.ManyToManyField(Format, related_name='choices')
 
     # The selected format for the final download
-    file_format = models.ForeignKey(Format, on_delete=models.CASCADE, blank=True, null=True)
+    file_format = models.ForeignKey(
+        Format, on_delete=models.CASCADE, blank=True, null=True)
 
     def get_absolute_url(self):
         return reverse('download:detail', kwargs={'pk': self.pk})
@@ -128,7 +149,7 @@ class Download(TimestampedModel):
         # Also only if the download object is being created for the first time
         if (not self.id) and command and url:
 
-            self.downloader = YoutubeDownloader() if command == 'YTDL' else TwitchDownloader()
+            self.downloader = YoutubeDownloader() if command.name == 'YTDL' else TwitchDownloader()
             try:
                 result = self.downloader.extract(url)
             except ExtractionError as error:
@@ -139,22 +160,25 @@ class Download(TimestampedModel):
                 ) from error
 
             # Add attributes parsed from info extraction
-            self.source = result['source']
+            self.source, _ = Source.objects.get_or_create(
+                name=result['source'])
             self.title = result['title']
             self.slug_id = result['slug_id']
             self.channel_name = result['channel_name']
 
             # Create database objects for Video formats if they don't exist
-            for (ext,qual,code) in result['format_info']:
+            for (ext, qual, code) in result['format_info']:
                 extension, _ = Extension.objects.get_or_create(name=ext)
                 quality, _ = Quality.objects.get_or_create(name=qual)
+                comm = Command.objects.get(name=self.command.name)
                 file_format, _ = Format.objects.get_or_create(
                     quality=quality,
                     extension=extension,
-                    defaults={'format_code':code}
+                    defaults={'format_code': code, 'command': comm}
                 )
                 self.format_ids.append(file_format.id)
-                logger.debug('File format option: Ext: %s Res: %s Code: %s', ext, qual, code)
+                logger.debug(
+                    'File format option: Ext: %s Res: %s Code: %s', ext, qual, code)
 
             logger.debug('Finished cleaning fields')
 

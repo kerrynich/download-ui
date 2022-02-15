@@ -14,6 +14,7 @@ from download_ui.apps.download.exceptions import ExtractionError, DownloadError
 
 logger = logging.getLogger('__name__')
 
+
 class Downloader(object):
     def __init__(self, task=None):
         self.task = task
@@ -23,6 +24,7 @@ class Downloader(object):
 
     def download(self, url, code):
         pass
+
 
 class YoutubeDownloader(Downloader):
     def __init__(self, task=None, code=''):
@@ -43,7 +45,8 @@ class YoutubeDownloader(Downloader):
                 self.first_stage = False
             else:
                 filename = down['filename'] if not self.two_stages else self.final_filename
-                self.task.update_state(state='FILENAME', meta={'filename': filename})
+                self.task.update_state(state='FILENAME', meta={
+                                       'filename': filename})
                 logger.debug("Done downloading %s", filename)
 
         if down['status'] == 'downloading':
@@ -64,30 +67,35 @@ class YoutubeDownloader(Downloader):
                 meta={'percent_str': percent_str, 'percent': percent_int}
             )
 
-    def format_size(self, total_bytes):
+    @staticmethod
+    def format_size(total_bytes):
         return youtube_dl.utils.format_bytes(total_bytes)
 
-    def get_download_opts(self, code):
+    @staticmethod
+    def get_download_opts(hook, code):
         ydl_opts = {
             'format': code,
             'outtmpl': os.path.join(settings.FILE_PATH_FIELD_DIRECTORY,
                                     '%(extractor_key)s/%(title)s-%(resolution)s.%(ext)s'),
             'logger': logger,
-            'progress_hooks': [self.my_hook],
+            'progress_hooks': [hook],
             'restrictfilenames': True,
             'noplaylist': True
         }
         return ydl_opts
 
-    def get_extract_opts(self):
+    @staticmethod
+    def get_extract_opts():
         ydl_opts = {
             'logger': logger
         }
         return ydl_opts
 
-    def parse_extraction(self, result):
+    @staticmethod
+    def parse_extraction(result):
         if not result:
-            raise ExtractionError('youtube-dl', 'Download Information not found')
+            raise ExtractionError(
+                'youtube-dl', 'Download Information not found')
 
         format_info = []
         audio_exists = False
@@ -120,7 +128,7 @@ class YoutubeDownloader(Downloader):
                 res = f'{format_junk["width"]}x?'
             else:
                 continue
-            if res is None or '':
+            if res is None:
                 continue
             # form code for formatting
             # Always using best quality audio
@@ -146,17 +154,18 @@ class YoutubeDownloader(Downloader):
             with ydl:
                 result = ydl.extract_info(
                     url,
-                    download=False # We just want to extract the info
+                    download=False  # We just want to extract the info
                 )
 
         except Exception as error:
             _, exc_value, _ = sys.exc_info()
-            raise ExtractionError('youtube-dl', exc_value.exc_info[1]) from error
+            raise ExtractionError(
+                'youtube-dl', exc_value.exc_info[1]) from error
 
         return self.parse_extraction(result)
 
     def download(self, url, code):
-        ydl = youtube_dl.YoutubeDL(self.get_download_opts(code))
+        ydl = youtube_dl.YoutubeDL(self.get_download_opts(self.my_hook, code))
         try:
             with ydl:
                 result = ydl.download([url])
@@ -165,34 +174,40 @@ class YoutubeDownloader(Downloader):
             _, exc_value, _ = sys.exc_info()
             raise DownloadError('youtube-dl', exc_value.exc_info[1]) from error
 
+
 class TwitchDownloader(Downloader):
     def __init__(self, task=None):
         Downloader.__init__(self, task)
 
-    def format_size(self, total_bytes):
+    @staticmethod
+    def format_size(total_bytes):
         return utils.format_size(total_bytes)
 
-    def get_download_opts(self, url, code):
+    @staticmethod
+    def get_download_opts(url, code):
         obj = type('', (), {})()
         obj.video = url
-        #TODO add quality to filename
+        # TODO add quality to filename
         obj.output = os.path.join(settings.FILE_PATH_FIELD_DIRECTORY,
                                   'twitch/{title_slug}.{format}')
         obj.quality = code
         obj.overwrite = False
         return obj
 
-    def get_extract_opts(self, url):
+    @staticmethod
+    def get_extract_opts(url):
         obj = type('', (), {})()
         obj.identifier = url
         obj.json = True
         return obj
 
-    def parse_extraction(self, result):
+    @staticmethod
+    def parse_extraction(result):
         if not result:
-            raise ExtractionError('twitch-dl', 'Download Information not found')
+            raise ExtractionError(
+                'twitch-dl', 'Download Information not found')
         # determine whether clip or video
-        if 'slug' in result: # it's a clip
+        if 'slug' in result:  # it's a clip
             identifier = result['slug']
             channel = result['broadcaster']
             format_info = []
@@ -243,6 +258,7 @@ class TwitchDownloader(Downloader):
             ansi_escape = re.compile(r'\x1B(?:[@-Z\\-_]|\[[0-?]*[ -/]*[@-~])')
             filename = ansi_escape.sub('', filename_raw)
             logger.debug('Parsed filename as %s', filename)
-            self.task.update_state(state='FILENAME', meta={'filename': filename})
+            self.task.update_state(state='FILENAME', meta={
+                                   'filename': filename})
         except Exception as error:
             raise DownloadError('twitch-dl', str(error)) from error

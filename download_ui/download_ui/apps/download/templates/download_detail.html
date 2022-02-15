@@ -14,7 +14,7 @@
             <tbody>
               <tr>
                 <th scope="row">Source:</th>
-                <td>{{ download.source }}</td>
+                <td>{{ download.source.name }}</td>
               </tr>
               <tr>
                 <th scope="row">File Path:</th>
@@ -26,7 +26,7 @@
               </tr>
               <tr>
                 <th scope="row">Command:</th>
-                <td>{{ download.get_command_display }}</td>
+                <td>{{ download.command.get_name_display }}</td>
               </tr>
               <tr>
                 <th scope="row">Size:</th>

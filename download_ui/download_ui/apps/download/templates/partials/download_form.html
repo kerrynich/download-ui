@@ -2,12 +2,12 @@
 <form action="" method="post" hx-target="this" hx-swap="outerHTML">
   {% csrf_token %}
   {{ form|crispy }}
-  <button class="btn btn-primary" type="submit" hx-post=".">
+  <button class="btn btn-primary" type="submit" hx-post="{% url 'download:create' %}">
     Submit
   </button>
 </form>
 {% if task_info %}
-<div id="alerts" hx-swap-oob="beforeend:#newdownloads">
+<div id="alerts" hx-swap-oob="afterbegin:#newdownloads">
   {% include "partials/download_progress.html" %}
 </div>
 {% endif %}
