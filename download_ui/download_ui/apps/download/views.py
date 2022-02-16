@@ -2,6 +2,7 @@ from datetime import timedelta
 import logging
 
 from celery.result import AsyncResult
+from django.db.models import Q
 from django.shortcuts import get_object_or_404, render
 from django.urls import reverse_lazy
 from django.utils import timezone
@@ -94,6 +95,14 @@ class DownloadDetailView(DetailView):
     model = Download
     template_name = "download_detail.html"
 
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        obj = self.get_object()
+        obj.set_missing_if_file_not_found()
+        obj.save()
+        context['download'] = obj
+        return context
+
 
 class DownloadDeleteView(DeleteView):
     model = Download
@@ -101,10 +110,36 @@ class DownloadDeleteView(DeleteView):
     success_url = reverse_lazy('download:list')
 
 
+class DownloadArchiveView(UpdateView):
+    model = Download
+    fields = []
+    template_name = "download_confirm_delete.html"
+    success_url = reverse_lazy('download:list')
+
+    def form_valid(self, form):
+        response = super().form_valid(form)
+        obj = self.get_object()
+        print(obj)
+        obj.archive_download()
+        print(obj)
+        obj.save()
+        return response
+
+
 class DownloadListView(ListView):
     model = Download
     template_name = "download_list.html"
     paginate_by = 20
+
+    def get_queryset(self):
+        query = self.request.GET.get('q')
+        if query:
+            download_list = Download.objects.filter(
+                Q(title__icontains=query) | Q(url__icontains=query)
+            )
+        else:
+            download_list = Download.objects.all()
+        return download_list
 
 
 class DownloadProgressView(View):

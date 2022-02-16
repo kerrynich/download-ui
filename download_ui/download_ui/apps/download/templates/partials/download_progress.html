@@ -22,10 +22,21 @@
     </div>
     {% endwith %}
   </div>
-{% elif download.status == "F" %}
+{% elif download.status == "F" or download.status == "M" %}
   <div class="progress" style="height: 31px;">
     <div id="pb"
         class="progress-bar w-100 bg-danger"
+        role="progressbar"
+        aria-valuenow="100"
+        aria-valuemin="0"
+        aria-valuemax="100">
+      {{download.get_status_display}}
+    </div>
+  </div>
+{% elif download.status == "A" %}
+  <div class="progress" style="height: 31px;">
+    <div id="pb"
+        class="progress-bar w-100 bg-secondary"
         role="progressbar"
         aria-valuenow="100"
         aria-valuemin="0"

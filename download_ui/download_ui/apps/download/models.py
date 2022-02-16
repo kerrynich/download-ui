@@ -1,4 +1,5 @@
 import logging
+import os
 
 from django.conf import settings
 from django.core.exceptions import ValidationError
@@ -87,6 +88,8 @@ class Download(TimestampedModel):
         STARTED = 'S', _get('Started')
         FAILED = 'F', _get('Failed')
         COMPLETED = 'C', _get('Completed')
+        ARCHIVED = 'A', _get('Archived')
+        MISSING = 'M', _get('Missing')
 
     # The command used to download
     command = models.ForeignKey(Command, on_delete=models.CASCADE)
@@ -139,6 +142,16 @@ class Download(TimestampedModel):
     def __str__(self):
         return self.title
 
+    def set_missing_if_file_not_found(self):
+        if not os.path.exists(self.file_path) and self.status == Download.Status.COMPLETED:
+            self.status = Download.Status.MISSING
+
+    def archive_download(self):
+        if os.path.exists(self.file_path):
+            os.remove(self.file_path)
+
+        self.status = Download.Status.ARCHIVED
+
     def clean_fields(self, exclude=None):
         super().clean_fields(exclude=exclude)
         logger.debug('Cleaning fields')
@@ -185,10 +198,6 @@ class Download(TimestampedModel):
     def save(self, *args, **kwargs):
         not_exists = not self.id
         format_ids = self.format_ids
-
-        # if download is being freshly created
-        if not not_exists and not self.active_task_id:
-            self.status = Download.Status.STARTED
 
         # Call the "real" save() method.
         super().save(*args, **kwargs)

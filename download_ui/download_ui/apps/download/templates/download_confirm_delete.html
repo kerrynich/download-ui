@@ -5,6 +5,9 @@
 <h1>Delete Download</h1>
 
 <p>Are you sure you want to delete the download: {{ download }}?</p>
+{% if download.file_path %}
+<p><strong>This will also delete the file: {{ download.file_path }}.</strong></p>
+{% endif %}
 
 <form action="" method="POST">
   {% csrf_token %}

@@ -9,24 +9,27 @@
       Latest Downloads
     </div>
     <div class="card-body">
+      <form action="{% url 'download:list' %}" method="get">
+        <input name="q" type="text" placeholder="Search...">
+      </form>
       <div class="table-responsive">
         <table class="table table-striped">
           <thead>
             <tr>
               <th scope="col">#</th>
               <th scope="col">Title</th>
+              <th scope="col">Status</th>
               <th scope="col">Source</th>
             </tr>
           </thead>
           <tbody>
             {% for download in download_list %}
               <tr>
-                <th scope="row">
-                  <a href="{% url 'download:detail' download.id %}">{{ download.id }}</a>
-                </th>
+                <th scope="row">{{ download.id }}</th>
                 <td>
                   <a href="{% url 'download:detail' download.id %}">{{ download.title }}</a>
                 </td>
+                {% include "partials/download_status.html" %}
                 <td>{{download.source}}</td>
               </tr>
             {% endfor %}

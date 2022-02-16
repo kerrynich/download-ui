@@ -1,12 +1,22 @@
 <div class="col-sm-auto text-white bg-dark">
   {% block sidebar %}
-    <ul class="nav nav-pills flex-column list-unstyled py-3">
-      <li class="nav-item">
-        <a href="{% url 'download:home' %}" class="nav-link text-white {% if request.resolver_match.url_name == 'home' %}active{% endif %}">Home</a>
-      </li>
-      <li class="nav-item">
-        <a href="{% url 'download:list' %}" class="nav-link text-white {% if request.resolver_match.url_name == 'list' %}active{% endif %}">Downloads</a>
-      </li>
-    </ul>
+  <div class="text-center">
+    <i class="bi-file-arrow-down py-4" style="font-size: 3rem; color: cornflowerblue;"></i>
+    <i class="bi-file-lock py-4" style="font-size: 3rem; color: cornflowerblue;"></i>
+  </div>
+  <ul class="nav nav-pills flex-column list-unstyled">
+    <li class="nav-item">
+      <a href="{% url 'download:home' %}" class="nav-link text-white {% if request.resolver_match.url_name == 'home' %}active{% endif %}">
+        <i class="bi-house-door"></i>
+        Home
+      </a>
+    </li>
+    <li class="nav-item">
+      <a href="{% url 'download:list' %}" class="nav-link text-white {% if request.resolver_match.url_name == 'list' %}active{% endif %}">
+        <i class="bi-list-ul"></i>
+        Downloads
+      </a>
+    </li>
+  </ul>
   {% endblock %}
 </div>

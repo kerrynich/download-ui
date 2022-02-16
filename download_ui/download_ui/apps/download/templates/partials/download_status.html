@@ -1,0 +1,17 @@
+{% if download.status == "A" %}
+<td class="text-secondary">
+  <strong>{{ download.get_status_display }}</strong>
+</td>
+{% elif download.status == "C" %}
+<td class="text-success">
+  <strong>{{ download.get_status_display }}</strong>
+</td>
+{% elif download.status == "M" or download.status == "F" %}
+<td class="text-danger">
+  <strong>{{ download.get_status_display }}</strong>
+</td>
+{% else %}
+<td class="text-primary">
+  <strong>{{ download.get_status_display }}</strong>
+</td>
+{% endif %}

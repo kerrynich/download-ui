@@ -13,16 +13,24 @@
           <table class="table table-striped">
             <tbody>
               <tr>
+                <th scope="row">Status:</th>
+                {% include "partials/download_status.html" %}
+              </tr>
+              <tr>
+                <th scope="row">URL:</th>
+                <td><a href="{{ download.url }}">{{ download.url }}</a></td>
+              </tr>
+              <tr>
                 <th scope="row">Source:</th>
                 <td>{{ download.source.name }}</td>
               </tr>
               <tr>
                 <th scope="row">File Path:</th>
+                {% if download.status == "A" or download.status == "M" %}
+                <td><s>{{ download.file_path }}</s></td>
+                {% else %}
                 <td>{{ download.file_path }}</td>
-              </tr>
-              <tr>
-                <th scope="row">URL:</th>
-                <td><a href="{{ download.url }}">{{ download.url }}</a></td>
+                {% endif %}
               </tr>
               <tr>
                 <th scope="row">Command:</th>
@@ -44,14 +52,12 @@
                 <th scope="row">Quality:</th>
                 <td>{{ download.file_format.quality }}</td>
               </tr>
-              <tr>
-                <th scope="row">Status:</th>
-                <td>{{ download.get_status_display }}</td>
-              </tr>
             </tbody>
           </table>
         </div>
+        {% if download.status != "A" %}
         <a class="btn btn-primary" href="{% url 'download:delete' download.id %}">Delete</a>
+        {% endif %}
       </div>
     </div>
   </div>

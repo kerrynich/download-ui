@@ -187,7 +187,6 @@ class TwitchDownloader(Downloader):
     def get_download_opts(url, code):
         obj = type('', (), {})()
         obj.video = url
-        # TODO add quality to filename
         obj.output = os.path.join(settings.FILE_PATH_FIELD_DIRECTORY,
                                   'twitch/{title_slug}.{format}')
         obj.quality = code
