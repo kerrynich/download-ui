@@ -1,5 +1,5 @@
 {% load crispy_forms_tags %}
-<form action="" method="post" hx-target="this" hx-swap="outerHTML">
+<form id="input-form" action="" method="post" hx-target="this" hx-swap="outerHTML">
   {% csrf_token %}
   {{ form|crispy }}
   <button class="btn btn-primary" type="submit" hx-post="{% url 'download:create' %}">
@@ -9,5 +9,10 @@
 {% if task_info %}
 <div id="alerts" hx-swap-oob="afterbegin:#newdownloads">
   {% include "partials/download_progress.html" %}
+</div>
+{% endif %}
+{% if existing %}
+<div id="modals-here" hx-swap-oob="true">
+  {% include "partials/existing_download_modal.html" %}
 </div>
 {% endif %}

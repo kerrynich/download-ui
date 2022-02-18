@@ -20,13 +20,12 @@ def worker_download(self, url, download_id, command, code):
     size = 'N/A'
 
     download.active_task_id = self.request.id
-    download.status = Download.Status.STARTED
     download.save()
 
     downloader = (YoutubeDownloader(task=self, code=code) if command == 'YTDL'
                   else TwitchDownloader(task=self))
     try:
-        downloader.download(url, code)
+        downloader.download(url, code, download_id)
         logger.debug('Downloading complete')
     except (DownloadError) as error:
         status = Download.Status.FAILED
@@ -39,11 +38,6 @@ def worker_download(self, url, download_id, command, code):
             filepath = result.info['filename']
             size = downloader.format_size(
                 os.path.getsize(filepath))
-            if command == 'TWDL':
-                base, ext = os.path.splitext(filepath)
-                filepath = f'{base}-{download.file_format.quality.name}{ext}'
-                os.rename(result.info['filename'], filepath)
-                logger.debug('Renamed file %s to %s', result.info['filename'], filepath)
 
     except (OSError) as error:
         status = Download.Status.FAILED

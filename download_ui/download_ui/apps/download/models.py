@@ -196,6 +196,7 @@ class Download(TimestampedModel):
             logger.debug('Finished cleaning fields')
 
     def save(self, *args, **kwargs):
+        logger.debug('Saving changes to: %d %s %s', self.id, self.status, self.title)
         not_exists = not self.id
         format_ids = self.format_ids
 

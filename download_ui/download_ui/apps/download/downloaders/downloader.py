@@ -22,7 +22,7 @@ class Downloader(object):
     def extract(self, url):
         pass
 
-    def download(self, url, code):
+    def download(self, url, code, down_id):
         pass
 
 
@@ -72,15 +72,18 @@ class YoutubeDownloader(Downloader):
         return youtube_dl.utils.format_bytes(total_bytes)
 
     @staticmethod
-    def get_download_opts(hook, code):
+    def get_download_opts(hook, code, down_id):
         ydl_opts = {
             'format': code,
-            'outtmpl': os.path.join(settings.FILE_PATH_FIELD_DIRECTORY,
-                                    '%(extractor_key)s/%(title)s-%(resolution)s.%(ext)s'),
+            'outtmpl': os.path.join(
+                settings.FILE_PATH_FIELD_DIRECTORY,
+                f'%(extractor_key)s/%(title)s-{down_id}-%(resolution)s.%(ext)s'
+            ),
             'logger': logger,
             'progress_hooks': [hook],
             'restrictfilenames': True,
-            'noplaylist': True
+            'noplaylist': True,
+            'nooverwrites': True
         }
         return ydl_opts
 
@@ -164,8 +167,8 @@ class YoutubeDownloader(Downloader):
 
         return self.parse_extraction(result)
 
-    def download(self, url, code):
-        ydl = youtube_dl.YoutubeDL(self.get_download_opts(self.my_hook, code))
+    def download(self, url, code, down_id):
+        ydl = youtube_dl.YoutubeDL(self.get_download_opts(self.my_hook, code, down_id))
         try:
             with ydl:
                 result = ydl.download([url])
@@ -184,11 +187,11 @@ class TwitchDownloader(Downloader):
         return utils.format_size(total_bytes)
 
     @staticmethod
-    def get_download_opts(url, code):
+    def get_download_opts(url, code, down_id):
         obj = type('', (), {})()
         obj.video = url
         obj.output = os.path.join(settings.FILE_PATH_FIELD_DIRECTORY,
-                                  'twitch/{title_slug}.{format}')
+                                  f'twitch/{{title_slug}}-{down_id}-{code}.{{format}}')
         obj.quality = code
         obj.overwrite = False
         return obj
@@ -247,10 +250,10 @@ class TwitchDownloader(Downloader):
 
         return self.parse_extraction(json_content)
 
-    def download(self, url, code):
+    def download(self, url, code, down_id):
         try:
             with redirect_stdout(io.StringIO()) as string_obj:
-                commands.download(self.get_download_opts(url, code))
+                commands.download(self.get_download_opts(url, code, down_id))
             std_out = string_obj.getvalue()
             matches = re.findall(r'Downloaded: (\S*)', std_out)
             filename_raw = matches[-1]

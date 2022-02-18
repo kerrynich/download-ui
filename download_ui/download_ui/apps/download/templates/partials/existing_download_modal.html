@@ -1,0 +1,67 @@
+<div id="modal-backdrop" class="modal-backdrop fade show" style="display:block;"></div>
+<div id="modal" class="modal fade show" tabindex="-1" style="display:block;">
+	<div class="modal-dialog modal-dialog-centered modal-lg">
+	  <div class="modal-content">
+      <div class="modal-header">
+      <h5 class="modal-title">{{ modal_title }}</h5>
+        <button type="button"
+                class="btn-close"
+                data-dismiss="modal"
+                aria-label="Close"
+                onclick="closeModal()">
+        </button>
+      </div>
+      <div class="modal-body">
+        {% for line in modal_body %}
+        <p>{{ line }}</p>
+        {% endfor %}
+        <ul class="list-unstyled">
+          {% for exist in existing %}
+          <li>
+            <a href="{% url 'download:detail' exist.id %}">
+              {{ exist.file_format.quality.name }} {{ exist.file_format.extension.name }}
+            </a>
+          </li>
+          {% endfor %}
+        </ul>
+        <p>Choose continue to proceed and download a fresh file.</p>
+      </div>
+      <div class="modal-footer">
+        <button type="button"
+                class="btn btn-secondary"
+                data-dismiss="modal"
+                onclick="closeModal()">
+          Close
+        </button>
+        <form action="" method="POST">
+          {% csrf_token %}
+          {% if update %}
+          {{ form.id.as_hidden }}
+          {{ form.url.as_hidden }}
+          {{ form.command.as_hidden }}
+          {{ form.file_format.as_hidden }}
+          <a class="btn btn-primary"
+            data-dismiss="modal"
+            onclick="closeModal()"
+            hx-swap="outerHTML"
+            hx-target="#input-form"
+            hx-post="{% url 'download:update' download.id %}?override=true">
+            Continue
+          </a>
+          {% else %}
+          {{ form.url.as_hidden }}
+          {{ form.command.as_hidden }}
+          <a class="btn btn-primary"
+            data-dismiss="modal"
+            onclick="closeModal()"
+            hx-swap="outerHTML"
+            hx-target="#input-form"
+            hx-post="{% url 'download:create' %}?override=true">
+            Continue
+          </a>
+          {% endif %}
+        </form>
+      </div>
+	  </div>
+	</div>
+</div>

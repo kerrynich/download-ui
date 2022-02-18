@@ -13,6 +13,21 @@
     integrity="sha384-oGA+prIp5Vchu6we2YkI51UtVzN9Jpx2Z7PnR1I78PnZlN8LkrCT4lqqqmDkyrvI"
     crossorigin="anonymous">
   </script>
+  <script>
+    function closeModal() {
+      var container = document.getElementById("modals-here")
+      var backdrop = document.getElementById("modal-backdrop")
+      var modal = document.getElementById("modal")
+
+      modal.classList.remove("show")
+      backdrop.classList.remove("show")
+
+      setTimeout(function() {
+        container.removeChild(backdrop)
+        container.removeChild(modal)
+      }, 200)
+    }
+  </script>
 </head>
 <body>
   <div class="container-fluid h-100">

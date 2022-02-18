@@ -9,7 +9,8 @@
         Input your link for download...
       </div>
       <div class="card-body">
-        <div hx-get="{% url 'download:create' %}" hx-swap="outerHTML" hx-trigger="load"></div>
+        <div id="input-form" hx-get="{% url 'download:create' %}" hx-swap="outerHTML" hx-trigger="load"></div>
+        <div id="modals-here"></div>
       </div>
     </div>
     <div class="col"></div>
