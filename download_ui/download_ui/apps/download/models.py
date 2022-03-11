@@ -7,7 +7,7 @@ from django.db import models
 from django.urls import reverse
 from django.utils.translation import gettext_lazy as _get
 
-from .downloaders.downloader import TwitchDownloader, YoutubeDownloader
+from .downloaders.downloader import Downloader
 from .exceptions import ExtractionError
 
 logger = logging.getLogger('__name__')
@@ -143,7 +143,7 @@ class Download(TimestampedModel):
         return self.title
 
     def set_missing_if_file_not_found(self):
-        if not os.path.exists(self.file_path) and self.status == Download.Status.COMPLETED:
+        if self.status == Download.Status.COMPLETED and not os.path.exists(self.file_path):
             self.status = Download.Status.MISSING
 
     def archive_download(self):
@@ -162,7 +162,7 @@ class Download(TimestampedModel):
         # Also only if the download object is being created for the first time
         if (not self.id) and command and url:
 
-            self.downloader = YoutubeDownloader() if command.name == 'YTDL' else TwitchDownloader()
+            self.downloader = Downloader.get_downloader(command)
             try:
                 result = self.downloader.extract(url)
             except ExtractionError as error:

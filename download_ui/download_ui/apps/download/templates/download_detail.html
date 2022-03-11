@@ -59,7 +59,7 @@
             </tbody>
           </table>
         </div>
-        {% if download.status != "A" %}
+        {% if download.status != "A" and download.status != "S" %}
         <a class="btn btn-primary" href="{% url 'download:archive' download.id %}">Delete</a>
         {% endif %}
       </div>

@@ -4,9 +4,6 @@ from .models import Download, Format
 
 
 class DownloadForm(forms.ModelForm):
-    def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)
-
     class Meta:
         model = Download
         fields = ('command', 'url')

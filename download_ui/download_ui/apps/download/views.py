@@ -130,12 +130,7 @@ class DownloadUpdateView(UpdateView):
                     }
                     return render(self.request, "partials/download_format_form.html", context)
 
-        worker_download.delay(
-            self.object.url,
-            self.object.pk,
-            self.object.command.name,
-            self.object.file_format.format_code
-        )
+        worker_download.delay(self.object.pk)
         self.object.status = Download.Status.STARTED
         self.object.save()
         return response

@@ -1,3 +1,5 @@
+from abc import abstractmethod, ABC
+from collections import namedtuple
 from contextlib import redirect_stdout
 import io
 import json
@@ -15,18 +17,32 @@ from download_ui.apps.download.exceptions import ExtractionError, DownloadError
 logger = logging.getLogger('__name__')
 
 
-class Downloader(object):
+class Downloader(ABC):
     def __init__(self, task=None):
         self.task = task
 
+    @abstractmethod
     def extract(self, url):
         pass
 
+    @abstractmethod
     def download(self, url, code, down_id):
         pass
 
+    @staticmethod
+    @abstractmethod
+    def format_size(total_bytes):
+        return str(total_bytes)
+
+    @staticmethod
+    def get_downloader(command, **kwargs):
+        downloaders = { down.command : down for down in Downloader.__subclasses__() }
+        return downloaders[command](**kwargs)
+
 
 class YoutubeDownloader(Downloader):
+    command = 'YTDL'
+
     def __init__(self, task=None, code=''):
         Downloader.__init__(self, task)
         self.two_stages = '+bestaudio' in code
@@ -122,7 +138,7 @@ class YoutubeDownloader(Downloader):
             # Get the resolution string (cribbed from youtube-dl's formatting)
             if format_junk.get('resolution') is not None:
                 res = format_junk['resolution']
-            if format_junk.get('height') is not None:
+            elif format_junk.get('height') is not None:
                 if format_junk.get('width') is not None:
                     res = f'{format_junk["width"]}x{format_junk["height"]}'
                 else:
@@ -131,8 +147,7 @@ class YoutubeDownloader(Downloader):
                 res = f'{format_junk["width"]}x?'
             else:
                 continue
-            if res is None:
-                continue
+
             # form code for formatting
             # Always using best quality audio
             if audio_exists:
@@ -168,7 +183,8 @@ class YoutubeDownloader(Downloader):
         return self.parse_extraction(result)
 
     def download(self, url, code, down_id):
-        ydl = youtube_dl.YoutubeDL(self.get_download_opts(self.my_hook, code, down_id))
+        ydl = youtube_dl.YoutubeDL(
+            self.get_download_opts(self.my_hook, code, down_id))
         try:
             with ydl:
                 result = ydl.download([url])
@@ -179,8 +195,11 @@ class YoutubeDownloader(Downloader):
 
 
 class TwitchDownloader(Downloader):
-    def __init__(self, task=None):
+    command = 'TWDL'
+
+    def __init__(self, task=None, code=''):
         Downloader.__init__(self, task)
+        self.code = code
 
     @staticmethod
     def format_size(total_bytes):
@@ -188,20 +207,21 @@ class TwitchDownloader(Downloader):
 
     @staticmethod
     def get_download_opts(url, code, down_id):
-        obj = type('', (), {})()
-        obj.video = url
-        obj.output = os.path.join(settings.FILE_PATH_FIELD_DIRECTORY,
-                                  f'twitch/{{title_slug}}-{down_id}-{code}.{{format}}')
-        obj.quality = code
-        obj.overwrite = False
-        return obj
+        options = namedtuple(
+            'Options', ['video', 'output', 'quality', 'overwrite'])
+        options.video = url
+        options.output = os.path.join(settings.FILE_PATH_FIELD_DIRECTORY,
+                                      f'twitch/{{title_slug}}-{down_id}-{code}.{{format}}')
+        options.quality = code
+        options.overwrite = False
+        return options
 
     @staticmethod
     def get_extract_opts(url):
-        obj = type('', (), {})()
-        obj.identifier = url
-        obj.json = True
-        return obj
+        options = namedtuple('Options', ['identifier', 'json'])
+        options.identifier = url
+        options.json = True
+        return options
 
     @staticmethod
     def parse_extraction(result):
