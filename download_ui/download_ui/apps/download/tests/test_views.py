@@ -459,6 +459,51 @@ class DownloadArchiveViewTest(TestCase):
         self.assertEqual(download.status, Download.Status.ARCHIVED)
 
 
+class DownloadCancelViewTest(TestCase):
+    @classmethod
+    def setUpTestData(cls):
+        command = Command.objects.create(name='YTDL')
+        source = Source.objects.create(name='Youtube')
+        Download.objects.create(
+            command=command,
+            source=source,
+            url='URL Test',
+            title='Title Test',
+            active_task_id='a1b2',
+            status=Download.Status.COMPLETED
+        )
+
+    @patch("download_ui.apps.download.views.app.control.revoke")
+    def test_view_url_exists_at_desired_location(self, _mocked_revoke):
+        response = self.client.get('/download/1/cancel/')
+        self.assertEqual(response.status_code, 200)
+
+    @patch("download_ui.apps.download.views.app.control.revoke")
+    def test_view_url_accessible_by_name(self, _mocked_revoke):
+        response = self.client.get(
+            reverse('download:cancel', kwargs={'pk': 1}))
+        self.assertEqual(response.status_code, 200)
+
+    @patch("download_ui.apps.download.views.app.control.revoke")
+    def test_view_uses_correct_template(self, _mocked_revoke):
+        response = self.client.get(
+            reverse('download:cancel', kwargs={'pk': 1}))
+        self.assertEqual(response.status_code, 200)
+        self.assertTemplateUsed(response, 'download_confirm_cancel.html')
+
+    @patch("download_ui.apps.download.views.app.control.revoke")
+    def test_view_archives_correctly(self, mocked_revoke):
+        response = self.client.post(
+            reverse('download:cancel', kwargs={'pk': 1}))
+        self.assertRedirects(response, reverse('download:home'))
+        download = Download.objects.get(id=1)
+        args, kwargs = mocked_revoke.call_args
+        self.assertEqual(args[0], download.active_task_id)
+        self.assertTrue(kwargs['terminate'])
+        self.assertEqual(kwargs['signal'], 'SIGUSR1')
+        self.assertEqual(download.status, Download.Status.TERMINATED)
+
+
 class DownloadListViewTest(TestCase):
     @classmethod
     def setUpTestData(cls):

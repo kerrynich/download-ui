@@ -1,4 +1,4 @@
-{% if download.status == "A" %}
+{% if download.status == "A" or download.status == "T" %}
 <td class="text-secondary">
   <strong>{{ download.get_status_display }}</strong>
 </td>

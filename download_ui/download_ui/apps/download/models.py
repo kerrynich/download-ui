@@ -90,6 +90,7 @@ class Download(TimestampedModel):
         COMPLETED = 'C', _get('Completed')
         ARCHIVED = 'A', _get('Archived')
         MISSING = 'M', _get('Missing')
+        TERMINATED = 'T', _get('Terminated')
 
     # The command used to download
     command = models.ForeignKey(Command, on_delete=models.CASCADE)
@@ -146,11 +147,17 @@ class Download(TimestampedModel):
         if self.status == Download.Status.COMPLETED and not os.path.exists(self.file_path):
             self.status = Download.Status.MISSING
 
-    def archive_download(self):
+    def change_status_and_kill_file(self, status):
         if os.path.exists(self.file_path):
             os.remove(self.file_path)
 
-        self.status = Download.Status.ARCHIVED
+        self.status = status
+
+    def archive_download(self):
+        self.change_status_and_kill_file(Download.Status.ARCHIVED)
+
+    def cancel_download(self):
+        self.change_status_and_kill_file(Download.Status.TERMINATED)
 
     def clean_fields(self, exclude=None):
         super().clean_fields(exclude=exclude)
@@ -162,7 +169,7 @@ class Download(TimestampedModel):
         # Also only if the download object is being created for the first time
         if (not self.id) and command and url:
 
-            self.downloader = Downloader.get_downloader(command)
+            self.downloader = Downloader.get_downloader(command.name)
             try:
                 result = self.downloader.extract(url)
             except ExtractionError as error:

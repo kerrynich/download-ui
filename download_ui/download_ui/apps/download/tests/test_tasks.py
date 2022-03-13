@@ -1,10 +1,11 @@
 import os
 from unittest.mock import MagicMock, patch
 
+from celery.exceptions import SoftTimeLimitExceeded
 from django.test import TestCase
 
 from download_ui.apps.download.models import Download, Command, Extension, Format, Quality, Source
-from download_ui.apps.download.tasks import worker_download
+from download_ui.apps.download.tasks import worker_download, check_for_missing_files
 from download_ui.apps.download.exceptions import DownloadError
 
 
@@ -67,6 +68,17 @@ class WorkerDownloadTest(TestCase):
             status=Download.Status.STARTED
         )
 
+        Download.objects.create(
+            command=command2,
+            source=source2,
+            url='https://twitch.com',
+            title='Title File Present',
+            slug_id='twitchfile',
+            file_format=format2,
+            file_path=filename,
+            status=Download.Status.COMPLETED
+        )
+
     @classmethod
     def tearDownClass(cls):
         super(WorkerDownloadTest, cls).tearDownClass()
@@ -113,3 +125,30 @@ class WorkerDownloadTest(TestCase):
         self.assertEqual(download.file_path, 'N/A')
         self.assertEqual(download.size, 'N/A')
         self.assertEqual(download.status, Download.Status.FAILED)
+
+    @patch("download_ui.apps.download.tasks.Downloader.get_downloader")
+    def test_task_twitchdl_soft_time_limit(self, mocked_downloader):
+        mocked_downloader.return_value = MagicMock(
+            download=MagicMock(side_effect=SoftTimeLimitExceeded))
+        mocked_task = MockedTask(req_id='test-id-celery-2')
+
+        worker_download(self=mocked_task, download_id=2)
+
+        download = Download.objects.get(id=2)
+        self.assertEqual(download.active_task_id, 'test-id-celery-2')
+        self.assertEqual(download.file_path, 'N/A')
+        self.assertEqual(download.size, 'N/A')
+        self.assertEqual(download.status, Download.Status.TERMINATED)
+
+    def test_task_periodic_missing_files_check(self):
+        download = Download.objects.get(id=3)
+        self.assertEqual(download.status, Download.Status.COMPLETED)
+        os.remove('test_file.txt')
+
+        check_for_missing_files()
+
+        download = Download.objects.get(id=3)
+        self.assertEqual(download.file_path, 'test_file.txt')
+        self.assertEqual(download.status, Download.Status.MISSING)
+        with open('test_file.txt', 'w', encoding='utf8') as fp:
+            fp.write("New test file created")

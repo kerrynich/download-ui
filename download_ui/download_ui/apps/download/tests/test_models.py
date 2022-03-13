@@ -63,6 +63,23 @@ class DownloadModelTest(TestCase):
         download.archive_download()
         self.assertTrue(not os.path.exists(filename))
         self.assertEqual(download.status, Download.Status.ARCHIVED)
+    
+    def test_cancel_download_no_file(self):
+        download = Download.objects.get(id=1)
+        download.file_path = "test_file_does_not_exist"
+        download.cancel_download()
+        self.assertEqual(download.status, Download.Status.TERMINATED)
+
+    def test_cancel_download_file_exists(self):
+        download = Download.objects.get(id=1)
+        filename = 'test_file.txt'
+        with open(filename, 'w', encoding='utf8') as fp:
+            fp.write("New test file created")
+        download.file_path = filename
+        self.assertTrue(os.path.exists(filename))
+        download.cancel_download()
+        self.assertTrue(not os.path.exists(filename))
+        self.assertEqual(download.status, Download.Status.TERMINATED)
 
     @patch("download_ui.apps.download.models.Downloader.get_downloader")
     def test_clean_fields(self, mocked_downloader):

@@ -1,0 +1,14 @@
+{% extends "base_generic.html" %}
+
+{% block content %}
+
+<h1>Cancel Download</h1>
+
+<p>Are you sure you want to cancel the download: {{ download }}?</p>
+
+<form action="" method="POST">
+  {% csrf_token %}
+  <input class="btn btn-primary" type="submit" value="Yes, cancel.">
+</form>
+
+{% endblock %}

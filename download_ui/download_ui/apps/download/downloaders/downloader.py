@@ -8,6 +8,7 @@ import os
 import re
 import sys
 
+from celery.exceptions import SoftTimeLimitExceeded
 from django.conf import settings
 from twitchdl import commands, utils
 import youtube_dl
@@ -189,6 +190,8 @@ class YoutubeDownloader(Downloader):
             with ydl:
                 result = ydl.download([url])
             return result
+        except SoftTimeLimitExceeded as soft:
+            raise soft
         except Exception as error:
             _, exc_value, _ = sys.exc_info()
             raise DownloadError('youtube-dl', exc_value.exc_info[1]) from error
@@ -282,5 +285,7 @@ class TwitchDownloader(Downloader):
             logger.debug('Parsed filename as %s', filename)
             self.task.update_state(state='FILENAME', meta={
                                    'filename': filename})
+        except SoftTimeLimitExceeded as soft:
+            raise soft
         except Exception as error:
             raise DownloadError('twitch-dl', str(error)) from error

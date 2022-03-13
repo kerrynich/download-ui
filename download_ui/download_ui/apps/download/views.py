@@ -9,6 +9,7 @@ from django.utils import timezone
 from django.utils.http import urlencode
 from django.views.generic import CreateView, ListView, DetailView, UpdateView, View
 
+from download_ui.celery import app
 from .forms import DownloadForm, DownloadFormatForm
 from .models import Download
 from .tasks import worker_download
@@ -176,6 +177,21 @@ class DownloadArchiveView(UpdateView):
         response = super().form_valid(form)
         obj = self.get_object()
         obj.archive_download()
+        obj.save()
+        return response
+
+
+class DownloadCancelView(UpdateView):
+    model = Download
+    fields = []
+    template_name = "download_confirm_cancel.html"
+    success_url = reverse_lazy('download:home')
+
+    def form_valid(self, form):
+        response = super().form_valid(form)
+        obj = self.get_object()
+        app.control.revoke(obj.active_task_id, terminate=True, signal='SIGUSR1')
+        obj.cancel_download()
         obj.save()
         return response
 

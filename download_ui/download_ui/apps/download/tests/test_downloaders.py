@@ -2,6 +2,7 @@ import os
 from unittest.mock import MagicMock, patch
 from django.conf import settings
 
+from celery.exceptions import SoftTimeLimitExceeded
 from django.test import TestCase
 from youtube_dl.utils import UnsupportedError, ExtractorError
 
@@ -189,6 +190,15 @@ class YoutubeDownloaderTest(TestCase):
 
         downloader = YoutubeDownloader()
         with self.assertRaisesMessage(DownloadError, 'Unsupported URL: www.google.com'):
+            downloader.download('www.google.com', '74', 1)
+
+    @patch("youtube_dl.YoutubeDL")
+    def test_downloader_download_timeout_exception(self, mocked_youtube_dl):
+        mocked_youtube_dl.return_value = MagicMock(
+            download=MagicMock(side_effect=SoftTimeLimitExceeded))
+
+        downloader = YoutubeDownloader()
+        with self.assertRaisesMessage(SoftTimeLimitExceeded, 'SoftTimeLimitExceeded()'):
             downloader.download('www.google.com', '74', 1)
 
     def test_downloader_download_opts(self):

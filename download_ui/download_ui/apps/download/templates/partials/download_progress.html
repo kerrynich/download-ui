@@ -9,19 +9,29 @@
     <p class="mb-2 mr-2 col-auto" style="text-align:right;">{{download.created_at|time}}</p>
   </div>
 {% if download.status == "S" %}
-  <div class="progress" style="height: 31px;">
-    {% with per_class=task_info.percent %}
-    <div id="pb" 
-        class="progress-bar"
-        style="width:{{per_class}}%"
-        role="progressbar"
-        aria-valuenow="{{task_info.percent}}"
-        aria-valuemin="0"
-        aria-valuemax="100">
-      {{task_info.percent_str}}
+  <div class="row align-self-center gx-2">
+    <div class="col">
+      <div class="progress" style="height: 31px;">
+        {% with per_class=task_info.percent %}
+        <div id="pb" 
+            class="progress-bar"
+            style="width:{{per_class}}%"
+            role="progressbar"
+            aria-valuenow="{{task_info.percent}}"
+            aria-valuemin="0"
+            aria-valuemax="100">
+          {{task_info.percent_str}}
+        </div>
+        {% endwith %}
+      </div>
     </div>
-    {% endwith %}
-  </div>
+    <div class="col-sm-auto">
+      <a class="btn btn-primary btn-sm"
+          classes="add show:600ms"
+          href="{% url 'download:cancel' download.id %}">
+        Cancel
+      </a>
+    </div>
 {% elif download.status == "F" or download.status == "M" %}
   <div class="progress" style="height: 31px;">
     <div id="pb"
@@ -33,7 +43,7 @@
       {{download.get_status_display}}
     </div>
   </div>
-{% elif download.status == "A" %}
+{% elif download.status == "A" or download.status == "T" %}
   <div class="progress" style="height: 31px;">
     <div id="pb"
         class="progress-bar w-100 bg-secondary"
