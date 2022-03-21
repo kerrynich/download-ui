@@ -19,13 +19,13 @@
     <div class="card mb-4 col-sm-auto" style="min-width: 280px">
       <div class="card-header">
         <i class="fas fa-table me-1"></i>
-        Daily Downloads
+        My Daily Downloads
       </div>
       <div class="card-body">
         <div id="newdownloads" class="mt-2"></div>
 
         <div class="mb-2">
-          {% for download in downloads %}
+          {% for download in my_downloads %}
 
           {% include "partials/download_progress.html" %}
 

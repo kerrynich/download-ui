@@ -18,9 +18,21 @@ from django.urls import include, path
 from django.views.generic import RedirectView
 from django.conf import settings
 from django.conf.urls.static import static
+from django.contrib.auth import views as auth_views
+
+from .apps.download.forms import RestrictedAuthenticationForm
 
 urlpatterns = [
     path('admin/', admin.site.urls),
     path('download/', include('download_ui.apps.download.urls')),
     path('', RedirectView.as_view(url='download/')),
+    path(
+        'login/',
+        auth_views.LoginView.as_view(
+            template_name="registration/login.html",
+            authentication_form=RestrictedAuthenticationForm
+        ),
+        name='login'
+    ),
+    path('', include('django.contrib.auth.urls'))
 ] + static(settings.STATIC_URL, document_root=settings.STATIC_ROOT)

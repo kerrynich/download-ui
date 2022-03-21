@@ -3,6 +3,7 @@ import os
 
 from django.conf import settings
 from django.core.exceptions import ValidationError
+from django.contrib.auth.models import AbstractUser
 from django.db import models
 from django.urls import reverse
 from django.utils.translation import gettext_lazy as _get
@@ -11,6 +12,10 @@ from .downloaders.downloader import Downloader
 from .exceptions import ExtractionError
 
 logger = logging.getLogger('__name__')
+
+
+class UserProfile(AbstractUser):
+    is_approved = models.BooleanField()
 
 
 class TimestampedModel(models.Model):
@@ -97,6 +102,10 @@ class Download(TimestampedModel):
 
     # The website to download from
     source = models.ForeignKey(Source, on_delete=models.CASCADE)
+
+    # The user who initiated the download
+    created_by = models.ForeignKey(
+        settings.AUTH_USER_MODEL, on_delete=models.SET_NULL, null=True, blank=True)
 
     # The URL to download
     url = models.URLField(max_length=300)
@@ -203,7 +212,8 @@ class Download(TimestampedModel):
             logger.debug('Finished cleaning fields')
 
     def save(self, *args, **kwargs):
-        logger.debug('Saving changes to: %d %s %s', self.id, self.status, self.title)
+        logger.debug('Saving changes to: %d %s %s',
+                     self.id, self.status, self.title)
         not_exists = not self.id
         format_ids = self.format_ids
 

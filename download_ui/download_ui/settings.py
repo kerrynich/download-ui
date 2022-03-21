@@ -127,6 +127,12 @@ STATIC_URL = '/static/'
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
+LOGIN_REDIRECT_URL = '/'
+LOGIN_URL = '/login/'
+AUTH_USER_MODEL = 'download.UserProfile'
+EMAIL_BACKEND = 'django.core.mail.backends.console.EmailBackend'
+ADMINS = [('Dummy_Admin', 'bozo-who-is-it@gmail.com')]
+
 # Folder for downloads
 # Production:
 # FILE_PATH_FIELD_DIRECTORY = '/media/zarvin/library/'

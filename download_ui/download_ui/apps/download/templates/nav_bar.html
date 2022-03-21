@@ -17,6 +17,25 @@
         Downloads
       </a>
     </li>
+    {% if user.is_authenticated %}
+    <li class="nav-link text-white mt-5">
+      <i class="bi-person-circle"></i>
+      {{ user.get_username }}
+    </li>
+    <li>
+      <a href="{% url 'logout'%}" class="nav-link text-white {% if request.resolver_match.url_name == 'login' %}active{% endif %}">
+        <i class="bi-door-closed-fill"></i>
+        Logout
+      </a>
+    </li>
+    {% else %}
+    <li>
+      <a href="{% url 'login'%}" class="nav-link text-white {% if request.resolver_match.url_name == 'logout' %}active{% endif %}">
+        <i class="bi-door-open-fill"></i>
+        Login
+      </a>
+    </li>
+    {% endif %}
   </ul>
   {% endblock %}
 </div>

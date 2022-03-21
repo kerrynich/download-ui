@@ -1,0 +1,17 @@
+{% extends "base_generic.html" %}
+
+{% block content %}
+<h1>Downloader Logged Out</h1>
+<div class="row gx-0">
+  <div class="card mb-4 col-sm-auto">
+    <div class="card-header">
+      <i class="fas fa-table me-1"></i>
+      Logged Out!
+    </div>
+    <div class="card-body">
+      <a href="{% url 'login'%}">Click here to login again.</a>
+    </div>
+  </div>
+  <div class="col"></div>
+</div>
+{% endblock %}

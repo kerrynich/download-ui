@@ -1,7 +1,8 @@
 from django.urls import path
 
 from .views import (DownloadCreateView, DownloadArchiveView, DownloadListView, DownloadCancelView,
-                    DownloadDetailView, DownloadProgressView, DownloadUpdateView, DownloadHomeView)
+                    DownloadDetailView, DownloadProgressView, DownloadUpdateView, DownloadHomeView,
+                    RegisterView)
 
 app_name = 'download'
 urlpatterns = [
@@ -12,5 +13,6 @@ urlpatterns = [
     path('list/', DownloadListView.as_view(), name='list'),
     path('<int:pk>/archive/', DownloadArchiveView.as_view(), name='archive'),
     path('<int:pk>/cancel/', DownloadCancelView.as_view(), name='cancel'),
-    path('<int:pk>/progress/', DownloadProgressView.as_view(), name='progress')
+    path('<int:pk>/progress/', DownloadProgressView.as_view(), name='progress'),
+    path('register/', RegisterView.as_view(), name="register")
 ]
