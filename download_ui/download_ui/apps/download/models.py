@@ -105,7 +105,7 @@ class Download(TimestampedModel):
 
     # The user who initiated the download
     created_by = models.ForeignKey(
-        settings.AUTH_USER_MODEL, on_delete=models.SET_NULL, null=True, blank=True)
+        settings.AUTH_USER_MODEL, on_delete=models.CASCADE)
 
     # The URL to download
     url = models.URLField(max_length=300)

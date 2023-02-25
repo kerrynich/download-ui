@@ -51,6 +51,7 @@ class YoutubeDownloader(Downloader):
         self.final_filename = None
 
     def my_hook(self, down):
+        logger.info(down)
         if down['status'] == 'finished':
             # If it's a youtube-dl download with separate audio and video
             # Video is downloaded first and then audio
@@ -97,6 +98,7 @@ class YoutubeDownloader(Downloader):
                 f'%(extractor_key)s/%(title)s-{down_id}-%(resolution)s.%(ext)s'
             ),
             'logger': logger,
+            'no_color': True,
             'progress_hooks': [hook],
             'restrictfilenames': True,
             'noplaylist': True,
@@ -107,7 +109,8 @@ class YoutubeDownloader(Downloader):
     @staticmethod
     def get_extract_opts():
         ydl_opts = {
-            'logger': logger
+            'logger': logger,
+            'no_color': True
         }
         return ydl_opts
 

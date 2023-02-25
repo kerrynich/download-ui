@@ -2,37 +2,63 @@
 
 {% block content %}
   <h1>Downloader Home</h1>
-  <div class="row gx-0">
-    <div class="card mb-4 col-sm-auto">
-      <div class="card-header">
-        <i class="fas fa-table me-1"></i>
-        Input your link for download...
+  <div class="row">
+    <div class="col-lg-6 mb-4">
+      <div class="row gx-0 ">
+        <div class="card mb-4 col-sm-auto">
+          <div class="card-header">
+            <i class="fas fa-table me-1"></i>
+            Input your link for download...
+          </div>
+          <div class="card-body">
+            {% if continue %}
+            <div id="input-form" hx-get="{% url 'download:update' continue %}" hx-swap="outerHTML" hx-trigger="load"></div>
+            {% else %}
+            <div id="input-form" hx-get="{% url 'download:create' %}" hx-swap="outerHTML" hx-trigger="load"></div>
+            {% endif %}
+            <div id="modals-here"></div>
+          </div>
+        </div>
+        <div class="col"></div>
       </div>
-      <div class="card-body">
-        <div id="input-form" hx-get="{% url 'download:create' %}" hx-swap="outerHTML" hx-trigger="load"></div>
-        <div id="modals-here"></div>
-      </div>
-    </div>
-    <div class="col"></div>
-  </div>
-  <div class="row g-0">
-    <div class="card mb-4 col-sm-auto" style="min-width: 280px">
-      <div class="card-header">
-        <i class="fas fa-table me-1"></i>
-        My Daily Downloads
-      </div>
-      <div class="card-body">
-        <div id="newdownloads" class="mt-2"></div>
+      <div class="card">
+        <div class="card-header">
+          <i class="fas fa-table me-1"></i>
+          My Daily Downloads
+        </div>
+        <div class="card-body">
+          <div id="newdownloads" class="mt-2"></div>
 
-        <div class="mb-2">
-          {% for download in my_downloads %}
+          <div class="mb-2">
+            {% for download in my_downloads %}
 
-          {% include "partials/download_progress.html" %}
+            {% include "partials/download_progress.html" %}
 
-          {% endfor %}
+            {% endfor %}
+          </div>
         </div>
       </div>
     </div>
-    <div class="col"></div>
+    <div class="col">
+      <div class="card" style="min-width: 280px">
+        <div class="card-header">
+          <i class="fas fa-table me-1"></i>
+          Other Daily Downloads
+        </div>
+        <div class="card-body">
+          <div class="mb-2">
+            {% if other_downloads %}
+            {% for download in other_downloads %}
+
+            {% include "partials/download_progress.html" %}
+
+            {% endfor %}
+            {% else %}
+            <p>No one else is downloading today.</p>
+            {% endif %}
+          </div>
+        </div>
+      </div>
+    </div>
   </div>
 {% endblock %}

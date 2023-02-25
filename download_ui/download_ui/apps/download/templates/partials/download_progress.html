@@ -1,81 +1,55 @@
 {% with trig=trigger %}
 <div hx-target="this"
     hx-get="{% url 'download:progress' download.id %}"
-    hx-trigger="{{ trig }}" 
+    hx-trigger="{{ trig }}"
     hx-swap="outerHTML"
     class="border rounded p-2 mb-2 bg-light">
   <div class="row">
-    <p class="mb-2 ml-2 col"><strong>{{ download.title }}</strong></p>
+    <p class="mb-2 ml-2 col"><strong>{{ download.title }}</strong> {% if download.created_by != user %}<small>by {{download.created_by}}</small>{% endif %}</p>
     <p class="mb-2 mr-2 col-auto" style="text-align:right;">{{download.created_at|time}}</p>
   </div>
-{% if download.status == "S" %}
   <div class="row align-self-center gx-2">
     <div class="col">
       <div class="progress" style="height: 31px;">
+        {% if download.status == "S" %}
         {% with per_class=task_info.percent %}
         <div id="pb" 
             class="progress-bar"
             style="width:{{per_class}}%"
             role="progressbar"
-            aria-valuenow="{{task_info.percent}}"
+            aria-valuenow="{{per_class}}"
             aria-valuemin="0"
             aria-valuemax="100">
           {{task_info.percent_str}}
         </div>
         {% endwith %}
-      </div>
-    </div>
-    <div class="col-sm-auto">
-      <a class="btn btn-primary btn-sm"
-          classes="add show:600ms"
-          href="{% url 'download:cancel' download.id %}">
-        Cancel
-      </a>
-    </div>
-{% elif download.status == "F" or download.status == "M" %}
-  <div class="progress" style="height: 31px;">
-    <div id="pb"
-        class="progress-bar w-100 bg-danger"
-        role="progressbar"
-        aria-valuenow="100"
-        aria-valuemin="0"
-        aria-valuemax="100">
-      {{download.get_status_display}}
-    </div>
-  </div>
-{% elif download.status == "A" or download.status == "T" %}
-  <div class="progress" style="height: 31px;">
-    <div id="pb"
-        class="progress-bar w-100 bg-secondary"
-        role="progressbar"
-        aria-valuenow="100"
-        aria-valuemin="0"
-        aria-valuemax="100">
-      {{download.get_status_display}}
-    </div>
-  </div>
-{% else %}
-  <div class="row align-self-center gx-2">
-    <div class="col">
-      <div class="progress" style="height: 31px;">
+        {% else %}
         <div id="pb"
-            class="progress-bar w-100 bg-success"
+            class="progress-bar w-100 {% if download.status == "F" or download.status == "M" %}bg-danger{% elif download.status == "A" or download.status == "T" %}bg-secondary{% else %}bg-success{% endif %}"
             role="progressbar"
             aria-valuenow="100"
             aria-valuemin="0"
             aria-valuemax="100">
           {{download.get_status_display}}
         </div>
+        {% endif %}
       </div>
     </div>
     <div class="col-sm-auto">
+      {% if download.status == "S" %}
+      <a class="btn btn-primary btn-sm"
+          classes="add show:600ms"
+          href="{% url 'download:cancel' download.id %}">
+        Cancel
+      </a>
+      {% else %}
       <a class="btn btn-primary btn-sm"
           classes="add show:600ms" 
           href="{% url 'download:detail' download.id %}">
         Details
       </a>
+      {% endif %}
     </div>
   </div>
-{% endif %}
 </div>
 {% endwith %}

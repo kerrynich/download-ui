@@ -56,11 +56,22 @@
                 <th scope="row">Quality:</th>
                 <td>{{ download.file_format.quality }}</td>
               </tr>
+              <tr>
+                <th scope="row">Owner:</th>
+                <td>{{ download.created_by }}</td>
+              </tr>
             </tbody>
           </table>
         </div>
-        {% if download.status != "A" and download.status != "S" %}
-        <a class="btn btn-primary" href="{% url 'download:archive' download.id %}">Delete</a>
+        {% if download.status == "D" or download.status == "F" %}
+        <a class="btn btn-primary {% if user != download.created_by %}disabled{% endif %}" href="{% url 'download:home' %}?continue={{download.id}}">
+          {% if download.status == "D" %}Continue{% else %}Retry{% endif %}
+        </a>
+        {% elif download.status != "A" and download.status != "S" %}
+        <a class="btn btn-primary {% if user != download.created_by %}disabled{% endif %}" href="{% url 'download:archive' download.id %}">Delete</a>
+        {% endif %}
+        {% if user != download.created_by %}
+        <span><small class="text-muted">Action disabled because you don't own this download</small></span>
         {% endif %}
       </div>
     </div>

@@ -2,18 +2,35 @@
 
 {% block content %}
   <h1>Download List</h1>
-  {% if download_list %}
   <div class="card mb-4">
     <div class="card-header">
       <i class="fas fa-table me-1"></i>
       Latest Downloads
     </div>
     <div class="card-body">
-      <form action="{% url 'download:list' %}" method="get">
-        <input name="q" type="text" placeholder="Search...">
+      <form class="row g-3 align-items-center" action="{% url 'download:list' %}" method="get">
+        <div class="col-md-3">
+          <label class="visually-hidden" for="searchbar">Username</label>
+          {% if q %}
+          {% with search_value=q %}
+          <input class="form-control" value="{{search_value}}" id="searchbar" name="q" type="text">
+          {% endwith %}
+          {% else %}
+          <input class="form-control" id="searchbar" name="q" type="text" placeholder="Search...">
+          {% endif %}
+        </div>
+        <div class="col-md-auto">
+          <div class="form-check">
+            <input class="form-check-input" value="True" name="mine" type="checkbox" id="mine" {% if mine %}checked{% endif %}>
+            <label class="form-check-label" for="mine">Only My Downloads</label>
+          </div>
+        </div>
+        <div class="col">
+          <button type="submit" class="btn btn-primary">Filter</button>
+        </div>
       </form>
       <div class="table-responsive">
-        <table class="table table-striped">
+        <table class="table table-striped table-hover">
           <thead>
             <tr>
               <th scope="col">#</th>
@@ -23,22 +40,23 @@
             </tr>
           </thead>
           <tbody>
+            {% if download_list %}
             {% for download in download_list %}
-              <tr>
-                <th scope="row">{{ download.id }}</th>
-                <td>
-                  <a href="{% url 'download:detail' download.id %}">{{ download.title }}</a>
-                </td>
-                {% include "partials/download_status.html" %}
-                <td>{{download.source}}</td>
-              </tr>
+            <tr>
+              <th scope="row">{{ download.id }}</th>
+              <td>
+                <a href="{% url 'download:detail' download.id %}">{{ download.title }}</a>
+              </td>
+              {% include "partials/download_status.html" %}
+              <td>{{download.source}}</td>
+            </tr>
             {% endfor %}
+            {% else %}
+            <tr><td class="text-center" colspan="4">There are no downloads that match your query.</td></tr>
+            {% endif %}
           </tbody>
         </table>
       </div>
     </div>
   </div>
-  {% else %}
-    <p>There are no downloads in the system.</p>
-  {% endif %}
 {% endblock %}

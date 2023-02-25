@@ -22,11 +22,19 @@ logger = logging.getLogger('__name__')
 class DownloadHomeView(LoginRequiredMixin, View):
     def get(self, request):
         time_threshold = timezone.now() - timedelta(hours=24)
-        my_downloads = Download.objects.filter(
-            created_at__gte=time_threshold).filter(
-            created_by=self.request.user).exclude(
+        all_downloads = Download.objects.filter(
+            created_at__gte=time_threshold).exclude(
             status=Download.Status.DRAFT)
-        context = {'my_downloads': my_downloads}
+        my_downloads = all_downloads.filter(
+            created_by=self.request.user)
+        other_downloads = all_downloads.exclude(
+            created_by=self.request.user)
+        context = {
+            'my_downloads': my_downloads,
+            'other_downloads': other_downloads
+        }
+        if 'continue' in self.request.GET:
+            context['continue'] = self.request.GET['continue']
         return render(request, "download_home.html", context)
 
 
@@ -72,6 +80,7 @@ class DownloadCreateView(LoginRequiredMixin, CreateView):
                         ],
                     }
                     return render(self.request, "partials/download_form.html", context)
+        form.instance.created_by = self.request.user
         return super().form_valid(form)
 
     def form_invalid(self, form):
@@ -208,13 +217,22 @@ class DownloadListView(LoginRequiredMixin, ListView):
 
     def get_queryset(self):
         query = self.request.GET.get('q')
-        if query:
-            download_list = Download.objects.filter(
-                Q(title__icontains=query) | Q(url__icontains=query)
-            )
+        filters = {
+            'mine': Q(created_by=self.request.user),
+            'q': Q(title__icontains=query) | Q(url__icontains=query)
+        }
+        selected_filters = [v for k,v in filters.items() if k in self.request.GET]
+        if len(selected_filters) > 0:
+            download_list = Download.objects.filter(*selected_filters)
         else:
             download_list = Download.objects.all()
         return download_list
+
+    def get_context_data(self,**kwargs):
+        context = super().get_context_data(**kwargs)
+        vals = {k: self.request.GET[k] for k in self.request.GET.keys() & {'q', 'mine'}}
+        context.update(vals)
+        return context
 
 
 class DownloadProgressView(LoginRequiredMixin, View):
